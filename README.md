@@ -68,7 +68,7 @@ See [docs/AI_usage_log.md](docs/AI_usage_log.md)
 
 ## Current Status
 - [x] Repository created
-- [ ] Proposal submitted
+- [x] Proposal submitted
 - [ ] First working demo
 - [ ] System works on my data
 - [ ] Metrics measured
