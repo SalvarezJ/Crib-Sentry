@@ -70,6 +70,6 @@ See [docs/AI_usage_log.md](docs/AI_usage_log.md)
 - [x] Repository created
 - [x] Proposal submitted
 - [x] First working demo
-- [ ] System works on my data
+- [x] System works on my data
 - [ ] Metrics measured
 - [ ] Final submitted
