@@ -7,20 +7,10 @@ Seth Alvarez
 Tier 2: three detectors and the logic that changes their boxes into one alert.
 
 ## Problem Statement
-A traditional baby monitor only helps if someone is watching it. Parents cannot watch all the time, so much of what the camera records goes unnoticed. The goal is to cut down on what gets missed.
+A traditional baby monitor only helps if someone watches it. Parents cannot watch all the time and they miss much of what the camera records. The goal is to cut down on what they miss.
 
 ## Solution Overview
-The system takes one image from a crib camera and runs three detectors. One finds the crib, one finds the child, and one finds hazards (toys and blankets). Then it compares the positions of the boxes and gives one of four alerts: all clear, left the crib, not visible, or hazard present.
-
-## How the System Decides the Alert
-1. If the system finds no crib box, the alert is "not visible."
-2. A box is inside the crib when more than half of its area is inside the crib box.
-3. A child box that is not inside the crib box gives "left the crib."
-4. A toy or blanket box inside the crib box gives "hazard present."
-5. No child box gives "not visible."
-6. A child box inside the crib box with no hazard inside gives "all clear."
-
-When more than one alert applies, the order is: left the crib, hazard present, not visible, all clear.
+The system takes one image from a crib camera and runs three detectors. One detector finds the crib, one finds the child and one finds toys and blankets. The system compares the positions of the boxes and gives one of four alerts: all clear, left the crib, not visible or hazard present.
 
 ## Technical Approach
 - CV technique: Object detection
@@ -29,22 +19,22 @@ When more than one alert applies, the order is: left the crib, hazard present, n
 - How I use it: Transfer learning from weights pretrained on COCO, 50 epochs for each detector
 - Framework: PyTorch through Ultralytics
 - Augmentation: Darker and lighter images, blur and rotation during training
-- Why: Each alert depends on the position of one box compared to another box, so I need bounding boxes.
+- Why: Each alert depends on the position of one box compared to another box and bounding boxes give me that.
 
 ## Dataset
 
 | Source | Used for | Size | License |
 |---|---|---|---|
-| [Baby in Crib](https://universe.roboflow.com/test-1caua/baby-in-crib) | Crib and Child training, and my 24 test images | 242 images, split 169/49/24 | CC BY 4.0 |
+| [Baby in Crib](https://universe.roboflow.com/test-1caua/baby-in-crib) | Crib and Child training and my 24 test images | 242 images, split 169/49/24 | CC BY 4.0 |
 | [Crib_detection](https://universe.roboflow.com/internship-cqxlp/crib_detection-xgv9n) | Crib training | 1,494 images | CC BY 4.0 |
 | [BASE crib only BABY only](https://universe.roboflow.com/first-workspace-9obfx/base-crib-only-baby-only-7ytse) | Child training | 309 original images | CC BY 4.0 |
-| [Baby object detection final](https://universe.roboflow.com/vtar/baby-object-detection-final) | Child training, and my 10 "left the crib" test images | 3,136 original frames for training | CC BY 4.0 |
+| [Baby object detection final](https://universe.roboflow.com/vtar/baby-object-detection-final) | Child training and my 10 "left the crib" test images | 3,136 original frames for training | CC BY 4.0 |
 | [CribHD](https://github.com/ostadabbas/CribNet) T and B | Hazard training | 1,369 training images | Non-commercial |
-| CribHD-C | Held-out test | 120 images, no labels | Non-commercial |
+| CribHD-C | Held-out test | 120 images with no labels | Non-commercial |
 
-More details are in [data/README.md](data/README.md).
+Baby in Crib contains studio photos and my first detector fails on real rooms. I add three datasets to train on more cribs and on real camera frames of children. More details are in [data/README.md](data/README.md).
 
-## Results
+## Success Metrics
 
 | Metric | Target | Result |
 |---|---|---|
@@ -53,22 +43,15 @@ More details are in [data/README.md](data/README.md).
 | "Left the crib" on 10 images from a different dataset | No target | 7 of 10 |
 | Alert accuracy on the 120 CribHD-C images | No target | 41.7% (50 of 120) |
 
-I did not meet the 85% target. The full tables and the errors are in [results/README.md](results/README.md).
+The system does not meet the 85% target. Recall is more important to me than precision because a missed problem is worse than a false alarm. The full tables and the errors are in [results/README.md](results/README.md).
 
 A correct alert: the child climbs out and the system gives "left the crib."
 
 ![Correct alert](results/left_the_crib.jpg)
 
-A failure: the child climbs out, but the system gives "all clear." In this side view, the child box is still on the crib box, so my "inside" rule reads the child as inside.
+A failure: the child climbs out but the system gives "all clear" because in a side view the child box is still on the crib box.
 
 ![Failure](results/failure_side_view.jpg)
-
-## What Changed From the Blueprint
-- **Two detectors became three.** My first detector found the child and the crib together. It got 75.0% on the test images and 0 of 10 on "left the crib." I split it into a Crib detector and a Child detector so each one can train on more data.
-- **I added three training datasets.** Baby in Crib has studio photos, and the first detector failed on real rooms. Crib_detection adds more cribs. BASE crib only BABY only and Baby object detection final add real camera frames of children.
-- **I removed wrong labels.** Baby in Crib had 18 crib boxes on photos that show a baby with no crib. I removed them.
-- **I did not use one dataset.** objetos_bebes has boxes on the head or a part of the body, and my system needs a box on the full child.
-- **I used Plan B for risk 2.** No dataset had a child out of a crib, so I found 10 test images of that in Baby object detection final. I removed their videos from the training data.
 
 ## Milestone Plan
 
@@ -84,24 +67,12 @@ A failure: the child climbs out, but the system gives "all clear." In this side 
 - Compute: Google Colab free tier with a T4 GPU
 - Cost: $0. Each model, dataset and tool that I use is free or open source.
 
-## Risks and What Happened
+## Risks and Mitigation
 
-| Risk from the Blueprint | What happened |
-|---|---|
-| The system does not find a child that lies down or is partly below a blanket | On CribHD-C, the Child detector finds the doll in 104 of 120 images, and a blanket is on most dolls. The larger problem there is the crib: the Crib detector finds it in only 76 of 120 images. |
-| No dataset has a child out of a crib | I used Plan B and found 10 test images. The first system got 0 of 10 and the new system gets 7 of 10. |
-
-## Notebooks
-
-| Notebook | What it does |
-|---|---|
-| 01 | First working demo |
-| 02, 03 | Train the first Child and Crib detector and the hazard detector |
-| 04 | Alert logic and the first measurement |
-| 05, 06 | Train the new Crib detector and the new Child detector |
-| 07 | Measure the old system and the new system on the same test images |
-| 08 | Measure the two systems on CribHD-C |
-| 09 | Demo |
+| Risk | Plan B | What happens |
+|---|---|---|
+| The system does not find a child that lies down or is partly below a blanket | The system gives "not visible" when it finds a crib and no child | On CribHD-C the Child detector finds the doll in 104 of 120 images. The Crib detector finds a crib in only 76 and that causes most errors. |
+| No dataset has a child out of a crib | Find a small extra dataset on Roboflow Universe | I find 10 test images in Baby object detection final. The first system gets 0 of 10 correct and the new system gets 7. |
 
 ## Demo Video
 Link goes here.
