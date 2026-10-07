@@ -86,4 +86,4 @@ See [docs/AI_usage_log.md](docs/AI_usage_log.md)
 - [x] First working demo
 - [x] System works on my data
 - [x] Metrics measured
-- [ ] Final submitted
+- [x] Final submitted
